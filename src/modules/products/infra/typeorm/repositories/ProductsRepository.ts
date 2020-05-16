@@ -40,7 +40,7 @@ class ProductsRepository implements IProductsRepository {
   }
 
   public async findAllById(products: IFindProducts[]): Promise<Product[]> {
-    const allProducts = await Promise.all(
+    const productsFoundById = await Promise.all(
       products.map(async product => {
         const productFound = await this.ormRepository.findOne({
           where: { id: product.id },
@@ -54,13 +54,31 @@ class ProductsRepository implements IProductsRepository {
       }),
     );
 
-    return allProducts;
+    return productsFoundById;
   }
 
   public async updateQuantity(
     products: IUpdateProductsQuantityDTO[],
   ): Promise<Product[]> {
-    // TODO
+    const updatedProducts = await Promise.all(
+      products.map(async product => {
+        const productFound = await this.ormRepository.findOne({
+          where: { id: product.id },
+        });
+
+        if (!productFound) {
+          throw new AppError('Product not found');
+        }
+
+        productFound.quantity -= product.quantity;
+
+        const updatedProduct = await this.ormRepository.save(productFound);
+
+        return updatedProduct;
+      }),
+    );
+
+    return updatedProducts;
   }
 }
 

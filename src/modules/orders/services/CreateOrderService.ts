@@ -36,11 +36,23 @@ class CreateProductService {
 
     const allProducts = await this.productsRepository.findAllById(products);
 
-    const productsI = allProducts.map(product => {
+    const productsI = allProducts.map(productOfDb => {
+      const findProductOfRequest = products.find(
+        product => product.id === productOfDb.id,
+      );
+
+      if (!findProductOfRequest) {
+        throw new AppError('Product not found');
+      }
+
+      if (findProductOfRequest.quantity > productOfDb.quantity) {
+        throw new AppError('Quantity is bigger than stock');
+      }
+
       return {
-        product_id: product.id,
-        price: product.price,
-        quantity: product.quantity,
+        product_id: findProductOfRequest.id,
+        price: productOfDb.price,
+        quantity: findProductOfRequest.quantity,
       };
     });
 
@@ -48,6 +60,15 @@ class CreateProductService {
       customer,
       products: productsI,
     });
+
+    await this.productsRepository.updateQuantity(
+      productsI.map(productI => {
+        return {
+          id: productI.product_id,
+          quantity: productI.quantity,
+        };
+      }),
+    );
 
     return order;
   }

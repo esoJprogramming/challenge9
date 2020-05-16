@@ -16,13 +16,18 @@ class OrdersRepository implements IOrdersRepository {
       customer_id: customer.id,
       order_products: products,
     });
+
     await this.ormRepository.save(order);
+
     order.customer = customer;
+
     return order;
   }
 
   public async findById(id: string): Promise<Order | undefined> {
-    return this.ormRepository.findOne(id);
+    const order = await this.ormRepository.findOne(id);
+
+    return order;
   }
 }
 
